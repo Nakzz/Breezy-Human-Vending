@@ -1,9 +1,20 @@
 import React, {Component} from 'react';
+const Mfrc522 = require("mfrc522-rpi");
+const SoftSPI = require("rpi-softspi");
+
 import logo from './logo.svg';
 import './App.css';
 
-// import {CardList} from '../src/component/card-list/card-list-component'
-// import {SearchBox} from '../src/component/searchBox/searchBox-component'
+//SETTING UP RFID 
+const softSPI = new SoftSPI({
+    clock: 23, // pin number of SCLK
+    mosi: 19, // pin number of MOSI
+    miso: 21, // pin number of MISO
+    client: 24 // pin number of CS
+});
+// GPIO 24 can be used for buzzer bin (PIN 18), Reset pin is (PIN 22).
+// I believe that channing pattern is better for configuring pins which are optional methods to use.
+const mfrc522 = new Mfrc522(softSPI).setResetPin(22).setBuzzerPin(18);
 
 
 class App extends Component {
@@ -34,9 +45,66 @@ constructor(){
     wopAvailable : 0,
 method: ""
   }
+
+
 }
+shouldComponentUpdate(nextProps, nextState) {
+    if(this.state.someVar === nextState.someVar) return false;
+    return true;
+  }
+startScanning = () =>{
+
+    const GLOBAL = this
+
+    var refreshId = setInterval(function () {
+        //# reset card
+        mfrc522.reset();
+
+        //# Scan for cards
+        let response = mfrc522.findCard();
+
+        if (!response.status) {
+            console.log("No Card");
+            GLOBAL.setState({
+                method: 'No Card'
+            })
+            return;
+        }
+
+        //# Get the UID of the card
+        response = mfrc522.getUid();
+        if (!response.status) {
+            console.log("UID Scan Error");
+            GLOBAL.setState({
+                method: 'UID Scan Error'
+            })
+            return;
+        }
+        //# If we have the UID, continue
+        let uid = response.data;
 
 
+        mfrc522.stopCrypto();
+
+
+
+        if (uid) {
+            uid.pop()
+            let id = uid.join().replace(/,/g, "")
+            
+            this.setState({
+                idField: id
+            })
+
+            clearInterval(refreshId)
+
+            return
+        }
+
+
+
+    }, 1000)
+}
 
 handleSearchState =(e) =>{
   let field = e.target.value
