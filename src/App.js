@@ -1,9 +1,11 @@
 import React, {Component} from 'react';
+import logo from './logo.svg';
+import './App.css';
+
+
 const Mfrc522 = require("mfrc522-rpi");
 const SoftSPI = require("rpi-softspi");
 
-import logo from './logo.svg';
-import './App.css';
 
 //SETTING UP RFID 
 const softSPI = new SoftSPI({
